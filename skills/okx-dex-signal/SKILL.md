@@ -4,7 +4,7 @@ description: "Use this skill for smart-money/whale/KOL/大户 activity tracking,
 license: MIT
 metadata:
   author: okx
-  version: "2.4.1"
+  version: "2.5.0"
   homepage: "https://web3.okx.com"
 ---
 
