@@ -4,7 +4,7 @@ description: "Use this skill for security scanning: check transaction safety, is
 license: MIT
 metadata:
   author: okx
-  version: "2.5.0"
+  version: "1.1.0"
   homepage: "https://web3.okx.com"
 ---
 
@@ -137,6 +137,19 @@ The CLI accepts human-readable chain names and resolves them automatically.
 | Scroll | `scroll` | `534352` |
 
 **Address format note**: EVM addresses (`0x...`) work across Ethereum/BSC/Polygon/Arbitrum/Base etc. Solana addresses (Base58) and Bitcoin addresses (UTXO) have different formats. Do NOT mix formats across chain types.
+
+## Related Workflows
+
+When one of the following commands is used, show the related workflow hint after displaying results:
+
+| Command | Workflow | File |
+|---------|----------|------|
+| `security token-scan` | New Token Screening | `~/.onchainos/workflows/new-token-screening.md` |
+| `security token-scan` | Smart Money Signals | `~/.onchainos/workflows/smart-money-signals.md` |
+| `security token-scan` | Token Research | `~/.onchainos/workflows/token-research.md` |
+| `security token-scan` | Wallet Monitor | `~/.onchainos/workflows/wallet-monitor.md` |
+
+> Hint format: *"You can also try out our **[workflow name]** workflow for more comprehensive results. Would you like to try it?"*
 
 ## Command Index
 

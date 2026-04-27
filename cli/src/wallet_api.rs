@@ -373,8 +373,7 @@ impl UnsignedInfoResponse {
         }
         self.gas_station_token_list.iter().find(|t| {
             t.sufficient
-                && t.fee_token_address
-                    .eq_ignore_ascii_case(&self.default_gas_token_address)
+                && t.fee_token_address.eq_ignore_ascii_case(&self.default_gas_token_address)
         })
     }
 
@@ -656,15 +655,11 @@ impl WalletApiClient {
         let raw_text = resp.text().await.context("failed to read response body")?;
 
         if status.as_u16() >= 500 {
-            bail!(
-                "Wallet API server error (HTTP {}): {}",
-                status.as_u16(),
-                &raw_text
-            );
+            bail!("Wallet API server error (HTTP {}): {}", status.as_u16(), &raw_text);
         }
 
-        let body: Value =
-            serde_json::from_str(&raw_text).context("failed to parse wallet API response")?;
+        let body: Value = serde_json::from_str(&raw_text)
+            .context("failed to parse wallet API response")?;
 
         // Handle code as either string "0" or number 0
         let code_ok = match &body["code"] {
@@ -1472,51 +1467,21 @@ mod tests {
 
     #[test]
     fn gas_station_status_parses_all_known_values() {
-        assert_eq!(
-            GasStationStatus::parse("NOT_APPLICABLE"),
-            GasStationStatus::NotApplicable
-        );
-        assert_eq!(
-            GasStationStatus::parse("FIRST_TIME_PROMPT"),
-            GasStationStatus::FirstTimePrompt
-        );
-        assert_eq!(
-            GasStationStatus::parse("PENDING_UPGRADE"),
-            GasStationStatus::PendingUpgrade
-        );
-        assert_eq!(
-            GasStationStatus::parse("REENABLE_ONLY"),
-            GasStationStatus::ReenableOnly
-        );
-        assert_eq!(
-            GasStationStatus::parse("READY_TO_USE"),
-            GasStationStatus::ReadyToUse
-        );
-        assert_eq!(
-            GasStationStatus::parse("INSUFFICIENT_ALL"),
-            GasStationStatus::InsufficientAll
-        );
-        assert_eq!(
-            GasStationStatus::parse("HAS_PENDING_TX"),
-            GasStationStatus::HasPendingTx
-        );
+        assert_eq!(GasStationStatus::parse("NOT_APPLICABLE"), GasStationStatus::NotApplicable);
+        assert_eq!(GasStationStatus::parse("FIRST_TIME_PROMPT"), GasStationStatus::FirstTimePrompt);
+        assert_eq!(GasStationStatus::parse("PENDING_UPGRADE"), GasStationStatus::PendingUpgrade);
+        assert_eq!(GasStationStatus::parse("REENABLE_ONLY"), GasStationStatus::ReenableOnly);
+        assert_eq!(GasStationStatus::parse("READY_TO_USE"), GasStationStatus::ReadyToUse);
+        assert_eq!(GasStationStatus::parse("INSUFFICIENT_ALL"), GasStationStatus::InsufficientAll);
+        assert_eq!(GasStationStatus::parse("HAS_PENDING_TX"), GasStationStatus::HasPendingTx);
     }
 
     #[test]
     fn gas_station_status_unknown_values_map_to_unknown() {
         assert_eq!(GasStationStatus::parse(""), GasStationStatus::Unknown);
-        assert_eq!(
-            GasStationStatus::parse("not_applicable"),
-            GasStationStatus::Unknown
-        ); // case-sensitive
-        assert_eq!(
-            GasStationStatus::parse("UNKNOWN"),
-            GasStationStatus::Unknown
-        );
-        assert_eq!(
-            GasStationStatus::parse("garbage"),
-            GasStationStatus::Unknown
-        );
+        assert_eq!(GasStationStatus::parse("not_applicable"), GasStationStatus::Unknown); // case-sensitive
+        assert_eq!(GasStationStatus::parse("UNKNOWN"), GasStationStatus::Unknown);
+        assert_eq!(GasStationStatus::parse("garbage"), GasStationStatus::Unknown);
     }
 
     #[test]
@@ -1554,7 +1519,10 @@ mod tests {
 
     #[test]
     fn match_default_is_case_insensitive_on_address() {
-        let resp = make_unsigned_with_tokens("0xAAA", vec![make_token("USDT", "0xaaa", true)]);
+        let resp = make_unsigned_with_tokens(
+            "0xAAA",
+            vec![make_token("USDT", "0xaaa", true)],
+        );
         assert!(resp.match_default_sufficient_token().is_some());
     }
 
@@ -1572,7 +1540,10 @@ mod tests {
 
     #[test]
     fn match_default_returns_none_when_default_not_in_list() {
-        let resp = make_unsigned_with_tokens("0xdeadbeef", vec![make_token("USDT", "0xaaa", true)]);
+        let resp = make_unsigned_with_tokens(
+            "0xdeadbeef",
+            vec![make_token("USDT", "0xaaa", true)],
+        );
         assert!(resp.match_default_sufficient_token().is_none());
     }
 
@@ -1682,7 +1653,10 @@ mod tests {
     fn auto_pick_none_when_default_not_in_list_even_if_others_sufficient() {
         // Default points at a token not in list (unusual), one other is sufficient.
         // Must still return None (Scene C) — the default being set is user preference.
-        let resp = make_unsigned_with_tokens("0xdeadbeef", vec![make_token("USDC", "0xbbb", true)]);
+        let resp = make_unsigned_with_tokens(
+            "0xdeadbeef",
+            vec![make_token("USDC", "0xbbb", true)],
+        );
         assert!(resp.auto_pick_gas_token().is_none());
     }
 

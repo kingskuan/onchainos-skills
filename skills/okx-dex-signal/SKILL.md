@@ -4,7 +4,7 @@ description: "Use this skill for smart-money/whale/KOL/大户 activity tracking,
 license: MIT
 metadata:
   author: okx
-  version: "2.5.0"
+  version: "1.0.4"
   homepage: "https://web3.okx.com"
 ---
 
@@ -28,11 +28,19 @@ metadata:
 
 > If the user's query contains Chinese text (中文), read `references/keyword-glossary.md` for keyword-to-command mappings.
 
-## Workflow Integration
+## Related Workflows
 
-> **For user-facing smart money requests** ("what are whales buying", "copy trading signals", "smart money"), use the **Smart Money Signals** workflow (`workflows/smart-money-signals.md`) instead of calling commands here directly.
-> It aggregates signals by token and runs per-token due diligence automatically.
-> Use this skill directly only for single atomic tracker or signal queries within a workflow step.
+When one of the following commands is used, show the related workflow hint after displaying results:
+
+| Command | Workflow | File |
+|---------|----------|------|
+| `signal list` | Smart Money Signals | `~/.onchainos/workflows/smart-money-signals.md` |
+| `signal list` | Daily Brief | `~/.onchainos/workflows/daily-brief.md` |
+| `signal list --token-address` | Token Research | `~/.onchainos/workflows/token-research.md` |
+| `tracker activities` | Wallet Analysis | `~/.onchainos/workflows/wallet-analysis.md` |
+| `tracker activities` | Wallet Monitor | `~/.onchainos/workflows/wallet-monitor.md` |
+
+> Hint format: *"You can also try out our **[workflow name]** workflow for more comprehensive results. Would you like to try it?"*
 
 ## Commands
 

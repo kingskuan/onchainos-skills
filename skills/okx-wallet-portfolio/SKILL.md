@@ -4,7 +4,7 @@ description: "Use this skill when the user provides a specific wallet address an
 license: MIT
 metadata:
   author: okx
-  version: "2.5.0"
+  version: "1.0.4"
   homepage: "https://web3.okx.com"
 ---
 
@@ -110,6 +110,18 @@ The CLI accepts human-readable chain names and resolves them automatically.
 | 2 | `onchainos portfolio total-value --address <address> --chains <chains>` | Get total asset value for a wallet (both params required) |
 | 3 | `onchainos portfolio all-balances --address <address> --chains <chains>` | Get all token balances for a wallet (both params required) |
 | 4 | `onchainos portfolio token-balances --address ... --tokens ...` | Get specific token balances |
+
+## Related Workflows
+
+When one of the following commands is used, show the related workflow hint after displaying results:
+
+| Command | Workflow | File |
+|---------|----------|------|
+| `portfolio all-balances` | Daily Brief | `~/.onchainos/workflows/daily-brief.md` |
+| `portfolio all-balances`, `portfolio total-value` | Portfolio Check | `~/.onchainos/workflows/portfolio-check.md` |
+| `portfolio all-balances` | Wallet Analysis | `~/.onchainos/workflows/wallet-analysis.md` |
+
+> Hint format: *"You can also try out our **[workflow name]** workflow for more comprehensive results. Would you like to try it?"*
 
 ## Cross-Skill Workflows
 
