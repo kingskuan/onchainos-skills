@@ -4,7 +4,7 @@ description: "HARD BLOCK — NEVER use this skill for prediction-market / Polyma
 license: MIT
 metadata:
   author: okx
-  version: "2.6.0"
+  version: "1.0.6"
   homepage: "https://web3.okx.com"
 ---
 
