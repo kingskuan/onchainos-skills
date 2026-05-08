@@ -4,10 +4,12 @@
 
 `agentic-volume-booster` is a single-purpose Skill that helps Agentic Wallet trading-competition participants **meet a qualifying-volume threshold (default $1,000)** with the **lowest possible capital friction (default ≤ 0.5% of wallet)**.
 
+**Supported chains**: Solana (default route token: JUP) and X Layer (default route token: xETH). v0.2.0+.
+
 It does this by:
 
 1. Reading the user's wallet status, competition registration, and current cumulative volume.
-2. Auto-picking the deepest-liquidity, non-excluded token route on the target chain (e.g. JUP on Solana).
+2. Auto-picking the deepest-liquidity, non-excluded token route on the target chain.
 3. Planning a sequence of round-trips (buy → immediate sell) sized to hit the volume target while staying under the friction budget.
 4. Showing the plan to the user for one explicit confirmation.
 5. Executing the schedule autonomously, **stopping immediately** if any of: friction exceeds budget, price impact spikes 5×, wallet falls below the $100 participation-prize floor, or a leg fails simulation.

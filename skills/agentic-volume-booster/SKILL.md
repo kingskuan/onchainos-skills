@@ -1,7 +1,7 @@
 ---
 name: agentic-volume-booster
-description: "Complete trading-volume thresholds for Agentic Wallet competitions with minimum capital friction. Detects cumulative volume, picks the deepest-liquidity non-excluded token route, plans a round-trip schedule inside a hard friction budget (default 0.5% of capital), executes with live friction tracking and auto-stop on overrun. Triggers: 'complete competition volume', 'help me hit the $1000 trading volume', 'low-friction volume booster', 'trade volume completer', '刷交易量', '凑比赛交易量', '完成累计交易量门槛'. Do NOT use for: profit-seeking momentum trading (use okx-dex-swap), signal-driven entries (okx-dex-signal), or generic swaps. Assumes the user is registered for an Agentic Wallet competition and wants to qualify for the leaderboard or participation prize with the lowest possible cost."
-version: "0.1.0"
+description: "Complete trading-volume thresholds for Agentic Wallet competitions with minimum capital friction. Detects cumulative volume, picks the deepest-liquidity non-excluded token route on Solana (JUP) or X Layer (xETH), plans a round-trip schedule inside a hard friction budget (default 0.5% of capital), executes with live friction tracking and auto-stop on overrun. Triggers: 'complete competition volume', 'help me hit the $1000 trading volume', 'low-friction volume booster', 'trade volume completer', '刷交易量', '凑比赛交易量', '完成累计交易量门槛'. Do NOT use for: profit-seeking momentum trading (use okx-dex-swap), signal-driven entries (okx-dex-signal), or generic swaps. Assumes the user is registered for an Agentic Wallet competition and wants to qualify for the leaderboard or participation prize with the lowest possible cost."
+version: "0.2.0"
 author: "kingskuan"
 license: MIT
 tags:
@@ -10,6 +10,7 @@ tags:
   - competition
   - agentic-wallet
   - solana
+  - xlayer
   - low-friction
 ---
 
@@ -60,7 +61,7 @@ A round-trip plan that:
 |---|---|---|
 | `target_volume_usd` | `1000` | Competition leaderboard threshold. Lower if only chasing the participation prize ($100). |
 | `friction_budget_pct` | `0.5` | Hard cap, expressed as % of **total wallet capital** at session start. NOT % of volume. |
-| `chain` | `solana` | One of the competition-supported chains. Always check `competition_detail` first. |
+| `chain` | `solana` | One of the competition-supported chains. **`solana`** and **`xlayer`** are first-class in v0.2.0. Always check `competition_detail` first. |
 | `route_token` | auto-pick | Override the token used for round-trips. Leave empty to auto-pick the deepest-liquidity non-excluded token. |
 | `max_rounds` | `6` | Safety cap — never run more than this many round-trips even if budget allows. |
 | `slippage_tolerance` | `0.5` | Per-swap slippage in %. Applied to both legs. |
@@ -293,9 +294,9 @@ When the user's intent mixes (e.g. "刷量 + 顺便买点 BONK"), split: stay he
 
 ## Versioning
 
-- `0.1.0` (initial): Solana support, JUP route, USDC + SOL recycle pattern, dry-run mode.
-- (planned) `0.2.0`: X Layer support, USDT-X route on OKB-USDT pool.
-- (planned) `0.3.0`: persistent state file, cross-session continuation.
+- `0.1.0` (May 2026): Solana support, JUP route, USDC + SOL recycle pattern, dry-run mode. Validated end-to-end on live Agentic Trading Contest — $1,038 vol / $0.43 friction (0.10% capital).
+- `0.2.0` (May 2026): **X Layer support added.** Default route token on X Layer = xETH (`0xe7b000003a45145decf8a28fc755ad5ec5ea025a`) — $4.5M+ liquidity, top-10 holding 3.4%, riskControl 1. Per-chain token-selection table extended; excluded-pairs reference unchanged. X Layer is gas-free (chainIndex 196), so zero per-leg gas fee budget. Also: keyword + description updates for chain-aware Skill discovery.
+- (planned) `0.3.0`: persistent state file, cross-session continuation, BSC/Base/Arbitrum chain support.
 
 ## Acknowledgements
 

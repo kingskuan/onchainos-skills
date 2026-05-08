@@ -91,7 +91,27 @@ Backup candidates on Solana (in order):
 
 ### X Layer
 
-(Pending — most X Layer tokens have thin liquidity. Likely default to OKB-quoted routes through a small set of community tokens.)
+**Default winner**: xETH (wrapped ETH on X Layer, contract `0xe7b000003a45145decf8a28fc755ad5ec5ea025a`).
+
+Why xETH:
+- **$4.5M+ aggregate liquidity** — by far the deepest non-excluded pool on X Layer
+- **top-10 holding only 3.4%** — exceptionally distributed for a wrapped asset
+- **riskControlLevel 1** — clean
+- **bundle holding 0.0008%** — negligible bundle concentration
+- Established (>4 months), $14M+ market cap
+- **Not in excluded set**: X Layer's native is OKB / wrapped is WOKB. xETH is a token from X Layer's perspective (wraps a different chain's native), so xETH ↔ USDC and xETH ↔ OKB both count toward qualifying volume.
+
+Backup candidates on X Layer (in order):
+1. **xBTC** (`0xb7c00000bcdeef966b20b3d884b98e64d2b06b4f`) — wrapped BTC, $2.8M liquidity, riskControl 1, top10 9.3%. Same logic as xETH (token from X Layer perspective).
+2. **XDOG** (`0x0cc24c51bf89c00c5affbfcf5e856c25ecbdb48e`) — meme, $508K liquidity, 35K holders. Higher volatility but solid distribution. Skip if user wants the lowest-friction path.
+
+> **Skip TITAN**: appears in hot-tokens but has `riskControlLevel: 2` (medium). Filter cuts it.
+
+X Layer pricing notes:
+- **Zero gas fees** (chainIndex 196). Per-leg gas budget = $0. This is a meaningful edge over Solana's ~$0.01 priority gas.
+- LP fees on xETH/USDC pools typically 0.05–0.30%. Expected one-way friction ~0.10–0.20% on a $100 trade.
+- Stablecoin set on X Layer: USDC (`0x74b7f16337b8972027f6196a17a631ac6de26d22`), USDT (`0x1e4a5963abfd975d8c9021ce480b42188849d41d`), USDS.
+- Worked plan example: $200 USDC↔xETH × 5 rounds = $2000 volume on $200 capital, friction ~$2 (1% of capital — bigger than Solana JUP because LP fees on X Layer pools are slightly higher).
 
 ### Other chains
 
