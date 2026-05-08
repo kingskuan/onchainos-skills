@@ -1,6 +1,6 @@
 # Token Selection Algorithm
 
-How `okx-volume-booster` picks the optimal token to round-trip through.
+How `agentic-volume-booster` picks the optimal token to round-trip through.
 
 ## Goal
 

@@ -1,0 +1,22 @@
+{
+  "name": "agentic-volume-booster",
+  "description": "Complete trading-volume thresholds for Agentic Wallet competitions with minimum capital friction. Picks the deepest-liquidity non-excluded token, plans round-trips inside a hard friction budget, executes with live tracking and auto-stop.",
+  "version": "0.1.0",
+  "author": {
+    "name": "kingskuan",
+    "email": "kingskuan18@gmail.com"
+  },
+  "license": "MIT",
+  "keywords": [
+    "trading-strategy",
+    "volume",
+    "competition",
+    "agentic-wallet",
+    "solana",
+    "low-friction",
+    "okx",
+    "round-trip",
+    "leaderboard",
+    "participation-prize"
+  ]
+}

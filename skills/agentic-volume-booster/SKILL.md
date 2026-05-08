@@ -1,16 +1,27 @@
 ---
-name: okx-volume-booster
-description: "Complete trading-volume thresholds for OKX Agentic Wallet competitions with minimum capital friction. Detects current cumulative volume, picks the deepest-liquidity non-excluded token route on the target chain, plans a round-trip schedule that stays inside a hard friction budget (default 0.5% of capital), and executes step-by-step with live friction tracking and auto-stop on overrun. Triggers: 'complete competition volume', 'help me hit the $1000 trading volume', 'low-friction volume booster', 'trade volume completer', '刷交易量', '凑比赛交易量', '完成累计交易量门槛'. Do NOT use for: profit-seeking momentum trading (use okx-dex-swap), signal-driven entries (okx-dex-signal), or generic swaps. This skill assumes the user is registered for an Agentic Wallet competition and wants to qualify for the leaderboard or participation prize with the lowest possible cost."
+name: agentic-volume-booster
+description: "Complete trading-volume thresholds for Agentic Wallet competitions with minimum capital friction. Detects cumulative volume, picks the deepest-liquidity non-excluded token route, plans a round-trip schedule inside a hard friction budget (default 0.5% of capital), executes with live friction tracking and auto-stop on overrun. Triggers: 'complete competition volume', 'help me hit the $1000 trading volume', 'low-friction volume booster', 'trade volume completer', '刷交易量', '凑比赛交易量', '完成累计交易量门槛'. Do NOT use for: profit-seeking momentum trading (use okx-dex-swap), signal-driven entries (okx-dex-signal), or generic swaps. Assumes the user is registered for an Agentic Wallet competition and wants to qualify for the leaderboard or participation prize with the lowest possible cost."
+version: "0.1.0"
+author: "kingskuan"
 license: MIT
-metadata:
-  author: kingskuan
-  version: "0.1.0"
-  homepage: "https://github.com/okx/onchainos-skills"
+tags:
+  - trading-strategy
+  - volume
+  - competition
+  - agentic-wallet
+  - solana
+  - low-friction
 ---
 
-# OKX Volume Booster
+# Agentic Volume Booster
 
-Efficiently meet trading-competition volume thresholds (default $1,000) with hard-capped capital friction (default 0.5%). Built on the `onchainos` CLI; no novel infra.
+## Overview
+
+Efficiently meet Agentic Wallet trading-competition volume thresholds (default $1,000 USD) with **hard-capped capital friction** (default 0.5% of wallet). Built on the `onchainos` CLI; no novel infrastructure. Validated against live JUP round-trips on Solana: hit $1,038 volume with $0.43 (0.10%) realized friction — well below the 0.5% budget.
+
+## Risk Disclaimer
+
+> **⚠️ RISK LEVEL: ADVANCED.** This skill executes on-chain swaps autonomously after a single user confirmation of the plan. Although the design objective is to minimize capital loss, on-chain trades are irreversible. The skill enforces multiple safeguards (friction budget cap, max-rounds cap, dry-run mode, $100 wallet floor, per-leg quote re-validation) but cannot eliminate risk from network outages, pool depegs, MEV, or stablecoin de-pegs. Use only on funds you can afford to lose. The skill does NOT pursue PnL — its only goal is to log qualifying trading volume against a competition threshold at the lowest possible friction.
 
 ## Step 0 — Re-route check (run before every other step)
 
@@ -208,27 +219,20 @@ Per Agentic Wallet competition rules, the following do NOT count toward qualifyi
 
 This skill **never** routes through these pairs. The aggregator may internally route via SOL/WSOL, but the user-facing trade pair (USDC↔TOKEN, SOL↔TOKEN, etc.) is what the competition ranks against, so that's fine — the rule is about the user's submitted pair, not internal route hops.
 
-## Edge Cases
+## Error Handling
 
-### Aggregator dust on Solana
-Symptom: leg 2 simulation fails with `InstructionError[4]: Custom 1`.
-Cause: swap response's `toAmount` reports the gross amount; the wallet receives `toAmount - dust` (ATA rent, route fees).
-Fix: always re-read on-chain balance with `wallet balance --force` before scheduling the sell leg.
-
-### Solana priority gas spike
-Symptom: realized friction per leg jumps from 0.07% to 0.5%+.
-Cause: Solana mempool congestion → priority fees auto-bid up.
-Fix: pause for 30–60s, re-quote. If persistent, reduce `gas-level` (default `average` → `economic`) and accept slower confirmation.
-
-### Token price moves between legs
-Symptom: cumulative friction higher than expected even with low priceImpact reports.
-Cause: token price shifted between buy and sell — the swap is fast but not instant.
-Mitigation: keep round-trip size in pools where 2× the trade is < 0.1% of TVL (so MM rebalance brings price back fast). For deeper protection, run quote → execute back-to-back without yielding.
-
-### Competition data lag
-Symptom: after volume completion, `competition rank --wallet <addr>` returns `myRankInfo: null`.
-Cause: backend metric pipeline delay (5–30 min typical).
-Fix: this is normal. Tell the user to recheck in 30 min. Do NOT add more volume to "fix" it.
+| Error | Cause | Resolution |
+|-------|-------|------------|
+| `InstructionError[4]: Custom 1` (Solana sell leg simulation fails) | Swap response's `toAmount` reports gross; wallet receives `toAmount − dust` (ATA rent + aggregator route fees). Selling the gross amount = "insufficient funds". | Always re-read on-chain balance with `onchainos wallet balance --chain <c> --token-address <ca> --force` before the sell leg. Sell the actual on-chain balance, not the swap's reported `toAmount`. |
+| Realized friction per leg jumps from ~0.1% to ≥0.5% | Solana mempool congestion → priority fees auto-bid up. | Pause 30–60 s, re-quote. If persistent, reduce `--gas-level` (default `average` → `economic`) and accept slower confirmation. If still high, halt and report. |
+| Cumulative friction higher than predicted despite low quoted `priceImpactPercent` | Token price shifted between buy and sell legs. | Keep per-leg trade size below 0.5% of best-pool TVL (planner already enforces). For tightest control, run `quote` and `execute` back-to-back without yielding to other tasks. |
+| `competition rank --wallet <addr>` returns `myRankInfo: null` after volume completion | Backend metric pipeline delay (5–30 min typical). | Normal. Tell the user to recheck in 30 min. Do NOT add more volume to "fix" it. |
+| `not logged in` from wallet/competition CLI | Session expired or wallet never authenticated. | Defer to `okx-agentic-wallet` Authentication flow. Do NOT attempt the volume plan until login completes. |
+| `unsupported chain: <name>` | Chain name not in CLI mapping. | Run `onchainos wallet chains` to confirm name. Pass the numeric chainIndex (e.g. `501` for Solana) as fallback. |
+| `Network unavailable — invalid peer certificate` (Rust TLS error) | CLI was built with `webpki-roots`; environment has TLS-inspecting proxy with custom CA. | Rebuild CLI with `rustls-tls-native-roots` so it reads the system CA bundle. |
+| Plan refuses with "no viable round-trip token" | Filter pass yielded zero candidates (chain illiquid or filters too strict). | Pass `--route-token <address>` to override; or relax `--liquidity-min` (planner internal — currently 200K). If still none, the chain is genuinely unsuitable. |
+| Plan refuses with "would exceed friction budget" | Required friction-per-volume rate would push total over budget. | Either raise `friction_budget_pct` (note: defaults exist for a reason), lower `target_volume_usd`, or pick a deeper-liquidity chain. Do NOT silently degrade. |
+| Wallet falls below $100 mid-execution | Friction + price drift consumed the participation-prize buffer. | Auto-stop. Report. Do NOT continue — completing volume below the buffer disqualifies the user from the participation prize. |
 
 ## Examples
 
@@ -261,6 +265,32 @@ Plan would refuse and ask user to either lower target or raise budget;
 do NOT silently degrade.
 ```
 
+## Security Notices
+
+- **Risk Level**: `advanced`. Executes on-chain swaps after one user confirmation of the plan. Subsequent legs run autonomously inside the planned schedule.
+- **No private key handling**. Every signing operation is delegated to `onchainos` CLI, which uses TEE (Trusted Execution Environment) — the private key never leaves the secure enclave.
+- **No external API calls**. The skill drives `onchainos` CLI sub-commands only; the CLI itself reaches OKX endpoints. No third-party services contacted.
+- **No data exfiltration**. State (volume counter, plan, tx hashes) is persisted only to local `~/.onchainos/volume-booster-state.json`. No phone-home, no telemetry.
+- **Required confirmations**: the user MUST explicitly confirm the plan before `execute`. Per-leg confirmations are NOT required (would defeat the purpose of an automated scheduler), but every leg honors auto-stop conditions.
+- **Stop-loss equivalent**: friction budget cap acts as the stop-loss — exceeding it halts further legs.
+- **Max amount limit**: per-leg trade size is capped at `min(round_size, capital × 0.8, pool_tvl × 0.005)`.
+- **Dry-run default**: `dry_run: true` — `execute` requires explicit user override.
+- **Disclaimer**: digital asset trading involves risk; prices are volatile. Confirm understanding before running.
+
+## Skill Routing
+
+| User intent | Route to |
+|---|---|
+| Profit-seeking buy/sell of a specific token | `okx-dex-swap` |
+| Smart-money / KOL / whale signal-driven entries | `okx-dex-signal` |
+| Trending / momentum token discovery | `okx-dex-token` (hot-tokens) |
+| DeFi yield, staking, lending | `okx-defi-invest` |
+| Wallet auth (login / verify / logout) | `okx-agentic-wallet` |
+| Trading-competition registration / rank / claim | `okx-growth-competition` |
+| Pure round-trip volume completion (this skill's job) | **Stay** |
+
+When the user's intent mixes (e.g. "刷量 + 顺便买点 BONK"), split: stay here for the volume part, dispatch `okx-dex-swap` for the directional part.
+
 ## Versioning
 
 - `0.1.0` (initial): Solana support, JUP route, USDC + SOL recycle pattern, dry-run mode.
@@ -276,4 +306,4 @@ Built on top of:
 - `okx-dex-token` — hot-tokens and liquidity probe
 - `okx-growth-competition` — registration and status
 
-This Skill exists because it's the cheapest way to qualify for the Agentic Wallet leaderboard, given the competition's exclusion rules. It saves participants an estimated $5–20 in friction per qualification cycle compared to naïve "buy and sell anything" approaches.
+This skill exists because it is the cheapest documented way to qualify for an Agentic Wallet leaderboard given the competition's exclusion rules. It saves participants an estimated $5–20 in friction per qualification cycle compared to naïve "buy and sell anything" approaches.

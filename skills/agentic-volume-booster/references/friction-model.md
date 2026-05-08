@@ -1,6 +1,6 @@
 # Friction Model
 
-How `okx-volume-booster` estimates and tracks the cost of completing a target trading volume.
+How `agentic-volume-booster` estimates and tracks the cost of completing a target trading volume.
 
 ## Definitions
 
