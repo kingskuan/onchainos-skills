@@ -70,3 +70,6 @@ run.sh
 test-cases.json
 
 evals/
+
+# Skill submission packages (build artifacts)
+agentic-volume-booster-*.zip
