@@ -54,6 +54,7 @@ CLAUDE.local.md
 .cursorrules
 .cursorignore
 .claude
+.agents/
 
 # Superpowers generated docs (local only)
 docs/superpowers/
