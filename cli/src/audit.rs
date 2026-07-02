@@ -330,8 +330,29 @@ pub fn cli_command_name(cmd: &crate::Commands) -> String {
         Commands::Defi { command } => format!("defi {}", defi_sub(command)),
         Commands::Ws { command } => format!("ws {}", ws_sub(command)),
         Commands::Workflow { command } => format!("workflow {}", workflow_sub(command)),
+        Commands::Agent { command } => format!("agent {}", agent_sub(command)),
         Commands::Upgrade(_) => "upgrade".to_string(),
         Commands::CrossChain { .. } => "cross-chain".to_string(),
+    }
+}
+
+fn agent_sub(c: &crate::commands::agent::AgentCommand) -> &'static str {
+    use crate::commands::agent::AgentCommand;
+    match c {
+        AgentCommand::PreCheck { .. } => "pre-check",
+        AgentCommand::Create { .. } => "create",
+        AgentCommand::Update { .. } => "update",
+        AgentCommand::ValidateListing { .. } => "validate-listing",
+        AgentCommand::GetMyAgents => "get-my-agents",
+        AgentCommand::GetAgents { .. } => "get-agents",
+        AgentCommand::Get { .. } => "get",
+        AgentCommand::Activate { .. } => "activate",
+        AgentCommand::Deactivate { .. } => "deactivate",
+        AgentCommand::Upload { .. } => "upload",
+        AgentCommand::Search { .. } => "search",
+        AgentCommand::ServiceList { .. } => "service-list",
+        AgentCommand::FeedbackSubmit { .. } => "feedback-submit",
+        AgentCommand::FeedbackList { .. } => "feedback-list",
     }
 }
 

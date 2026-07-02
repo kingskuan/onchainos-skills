@@ -137,6 +137,12 @@ pub enum Commands {
         command: Box<commands::workflows::WorkflowCommand>,
     },
 
+    /// Agent identity (ERC-8004): register, update, search, activate agents
+    Agent {
+        #[command(subcommand)]
+        command: commands::agent::AgentCommand,
+    },
+
     /// Upgrade onchainos to the latest version
     Upgrade(commands::upgrade::UpgradeArgs),
 }
@@ -203,6 +209,7 @@ async fn run() {
         Commands::Defi { command } => commands::defi::execute(&ctx, command).await,
         Commands::Ws { command } => commands::ws::execute(command).await,
         Commands::Workflow { command } => commands::workflows::execute(&ctx, *command).await,
+        Commands::Agent { command } => commands::agent::execute(&ctx, command).await,
         Commands::Upgrade(args) => commands::upgrade::execute(args).await,
     };
 
