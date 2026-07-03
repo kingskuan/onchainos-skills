@@ -13,7 +13,6 @@ buyer flow. Off by default so the service is usable while pricing is decided.
 """
 from __future__ import annotations
 
-import os
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -21,18 +20,14 @@ import httpx
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 
-from . import edgar
+from . import edgar, payments
 from .research import research
 from .screener import DEFAULT_UNIVERSE, screen
 
 SERVICE_NAME = "Stock Research Agent"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
-# ── optional x402 payment gate (stub until pricing is set) ────────────────
-PAY_ENABLED = os.getenv("PAY_ENABLED", "0") == "1"
-PAY_PRICE = os.getenv("PAY_PRICE", "0.05")          # per call, USDT
-PAY_ASSET = os.getenv("PAY_ASSET", "USDT")
-PAY_ADDRESS = os.getenv("PAY_ADDRESS", "")           # ASP receiving address
+# Paths that require payment when the x402 gate is enabled.
 PAID_PATHS = ("/research", "/screener", "/mcp")
 
 
@@ -51,37 +46,31 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title=SERVICE_NAME, version=VERSION, lifespan=lifespan)
 
 
-def _payment_required(path: str) -> JSONResponse | None:
-    if not PAY_ENABLED or not path.startswith(PAID_PATHS):
-        return None
-    # x402-style payment requirements envelope
-    return JSONResponse(
-        status_code=402,
-        content={
-            "x402Version": 1,
-            "accepts": [
-                {
-                    "scheme": "exact",
-                    "network": "xlayer",
-                    "asset": PAY_ASSET,
-                    "amount": PAY_PRICE,
-                    "payTo": PAY_ADDRESS,
-                    "resource": path,
-                    "description": f"{SERVICE_NAME} — per-call fee",
-                }
-            ],
-        },
-    )
-
-
 @app.middleware("http")
 async def x402_gate(request: Request, call_next):
-    # Buyer supplies proof via X-PAYMENT; absence → 402 (when enabled).
-    if request.headers.get("x-payment") is None:
-        blocked = _payment_required(request.url.path)
-        if blocked is not None:
-            return blocked
-    return await call_next(request)
+    path = request.url.path
+    if not payments.enabled() or not path.startswith(PAID_PATHS):
+        return await call_next(request)
+
+    resource = str(request.url)
+    description = f"{SERVICE_NAME} — per-call fee"
+    x_payment = request.headers.get("x-payment")
+
+    if not x_payment:
+        return JSONResponse(status_code=402, content=payments.requirements(resource, description))
+
+    ok, reason, settlement = await payments.verify_and_settle(
+        request.app.state.client, x_payment, resource, description
+    )
+    if not ok:
+        body = payments.requirements(resource, description)
+        body["error"] = reason
+        return JSONResponse(status_code=402, content=body)
+
+    response = await call_next(request)
+    if settlement:
+        response.headers["X-PAYMENT-RESPONSE"] = payments.encode_response(settlement)
+    return response
 
 
 def _tool_manifest() -> list[dict[str, Any]]:
@@ -135,9 +124,10 @@ async def root():
         },
         "mcp_tools": _tool_manifest(),
         "payments": {
-            "enabled": PAY_ENABLED,
-            "price": PAY_PRICE,
-            "asset": PAY_ASSET,
+            "enabled": payments.enabled(),
+            "price": payments.config()["price"],
+            "asset": payments.config()["asset"],
+            "network": payments.config()["network"],
             "scheme": "x402 (exact)",
         },
     }

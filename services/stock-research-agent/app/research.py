@@ -12,6 +12,7 @@ from typing import Any
 import httpx
 
 from . import edgar, yahoo
+from .segments import segments as fetch_segments
 
 
 def _safe_div(a, b):
@@ -192,6 +193,12 @@ async def research(client: httpx.AsyncClient, ticker: str) -> dict[str, Any]:
 
     analyst = await yahoo.analyst(client, ticker)
 
+    # per-product / per-geography revenue (best-effort; never breaks research)
+    try:
+        seg = await fetch_segments(client, ref["cik"])
+    except Exception as e:  # noqa: BLE001
+        seg = {"available": False, "reason": str(e)[:120]}
+
     # narrative flags for the "5 things to check" workflow
     rev_cagr = _cagr({y: rev[y] for y in sorted(rev)[-5:]}) if rev else None
     ni_cagr = _cagr({y: ni[y] for y in sorted(ni)[-5:]}) if ni else None
@@ -224,14 +231,7 @@ async def research(client: httpx.AsyncClient, ticker: str) -> dict[str, Any]:
         "valuation": valuation,
         "financial_health": _health(facts, mkt_cap),
         "analysts": analyst,
-        "segments": {
-            "available": False,
-            "note": (
-                "Per-product / per-geography revenue segments are not in the "
-                "EDGAR companyfacts feed (they live in dimensional XBRL). "
-                "Planned for a later version via the frames + R-file parser."
-            ),
-        },
+        "segments": seg,
         "data_sources": ["SEC EDGAR companyfacts", "Yahoo Finance v8/v10"],
         "disclaimer": (
             "Informational only, not investment advice. Data from public "

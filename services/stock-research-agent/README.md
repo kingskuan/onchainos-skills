@@ -64,19 +64,26 @@ docker run -p 8000:8000 stock-research-agent
 
 ## Payments (x402) — optional, off by default
 
-To gate the API behind per-call payment (for the OKX A2MCP/x402 buyer flow),
-set env vars:
+Implements the seller side of the x402 flow: no `X-PAYMENT` → HTTP 402 with an
+`accepts` payment-requirements body; with `X-PAYMENT` → decode → facilitator
+`/verify` + `/settle` → 200 + `X-PAYMENT-RESPONSE` header. Verification is
+delegated to a pluggable x402 **facilitator**.
 
 | Var | Meaning | Example |
 |---|---|---|
 | `PAY_ENABLED` | Turn the 402 gate on | `1` |
-| `PAY_PRICE` | Per-call price | `0.05` |
-| `PAY_ASSET` | Asset | `USDT` |
-| `PAY_ADDRESS` | ASP receiving address | `0x...` |
+| `PAY_PRICE` | Per-call price (human) | `0.05` |
+| `PAY_ASSET` | Token symbol (display) | `USDT` |
+| `PAY_ASSET_ADDRESS` | Token contract | `0x...` |
+| `PAY_DECIMALS` | Token decimals | `6` |
+| `PAY_NETWORK` | Settlement network | `xlayer` |
+| `PAY_ADDRESS` | ASP receiving address (`payTo`) | `0x...` |
+| `FACILITATOR_URL` | x402 facilitator base URL (verify/settle) | `https://...` |
+| `X402_DEV_ACCEPT_UNVERIFIED` | Dev-only bypass — **insecure** | `0` |
 
-When enabled, calls without an `X-PAYMENT` header get an HTTP 402 with an
-`accepts` payment-requirements body. This is a stub aligned with the x402
-`exact` scheme — wire it to the OKX settlement/verify flow before going live.
+**Fail-closed:** with `PAY_ENABLED=1` but no `FACILITATOR_URL`, paid paths
+return 402 (never served unverified) unless `X402_DEV_ACCEPT_UNVERIFIED=1`.
+Point `FACILITATOR_URL` at the OKX x402 facilitator to accept real payments.
 
 ## Limits / roadmap
 
