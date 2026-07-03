@@ -33,7 +33,30 @@ P/E, P/S, net margin, and revenue growth.
 | GET | `/health` | Liveness |
 | GET | `/research/{ticker}` | Deep single-stock research |
 | GET | `/screener?min_market_cap=1e11&max_pe=30&min_revenue_cagr=0.08` | Screen |
+| GET | `/analyze/{ticker}` | **AI analyst** — bull vs bear debate + rating, grounded on the data (needs LLM key) |
 | POST | `/mcp` | MCP-style dispatch: `{"tool":"research_stock","arguments":{"ticker":"AAPL"}}` |
+
+## AI analyst layer (the moat)
+
+`/analyze/{ticker}` runs a lightweight multi-agent debate (bull vs bear → judge)
+**grounded on this service's own structured data** — financials, valuation,
+health score, and per-product/geography segments — and returns a rating
+(`STRONG_BUY`…`STRONG_SELL`), confidence, thesis, key reasons, and risks. The
+edge is the grounding: the model reasons over EDGAR-derived facts, not generic
+web text. Inspired by the TradingAgents pattern, kept compact (2 debate calls +
+1 judge) to stay fast and cheap.
+
+Pluggable LLM (OpenAI-compatible) via env — default **DeepSeek** (cheap):
+
+| Var | Meaning | Default |
+|---|---|---|
+| `LLM_API_KEY` | provider key (enables the layer) | — (required) |
+| `LLM_BASE_URL` | OpenAI-compatible base URL | `https://api.deepseek.com` |
+| `LLM_MODEL` | model id | `deepseek-chat` |
+
+No key → `/analyze` degrades to `{"available": false}` and still returns the
+grounding context; the free data endpoints are unaffected. Research support
+only, not investment advice.
 
 ## Run locally
 

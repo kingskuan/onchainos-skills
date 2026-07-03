@@ -21,14 +21,15 @@ from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 
 from . import edgar, payments
+from .analyst import analyze_stock
 from .research import research
 from .screener import DEFAULT_UNIVERSE, screen
 
 SERVICE_NAME = "Stock Research Agent"
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 
 # Paths that require payment when the x402 gate is enabled.
-PAID_PATHS = ("/research", "/screener", "/mcp")
+PAID_PATHS = ("/research", "/screener", "/analyze", "/mcp")
 
 
 @asynccontextmanager
@@ -81,6 +82,20 @@ def _tool_manifest() -> list[dict[str, Any]]:
                 "Deep research on a single US-listed stock: 5-year financials, "
                 "growth, valuation (P/E, P/S, P/B, EV/EBITDA), a financial-health "
                 "score (Altman Z), and analyst targets."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {"ticker": {"type": "string"}},
+                "required": ["ticker"],
+            },
+        },
+        {
+            "name": "analyze_stock",
+            "description": (
+                "AI analyst verdict on a stock: a bull-vs-bear debate grounded "
+                "on the company's financials/valuation/health/segments, plus a "
+                "rating (STRONG_BUY..STRONG_SELL), confidence, thesis, and risks. "
+                "Requires an LLM key configured on the server."
             ),
             "input_schema": {
                 "type": "object",
@@ -143,6 +158,12 @@ async def research_endpoint(request: Request, ticker: str):
     return await research(request.app.state.client, ticker)
 
 
+@app.get("/analyze/{ticker}")
+async def analyze_endpoint(request: Request, ticker: str):
+    """AI analyst: bull vs bear debate + verdict, grounded on our data."""
+    return await analyze_stock(request.app.state.client, ticker)
+
+
 @app.get("/screener")
 async def screener_endpoint(
     request: Request,
@@ -188,6 +209,11 @@ async def mcp_endpoint(request: Request, body: dict[str, Any]):
         if not t:
             return JSONResponse(status_code=400, content={"error": "ticker required"})
         return await research(client, t)
+    if tool == "analyze_stock":
+        t = args.get("ticker")
+        if not t:
+            return JSONResponse(status_code=400, content={"error": "ticker required"})
+        return await analyze_stock(client, t)
     if tool == "screen_stocks":
         universe = args.get("tickers") or DEFAULT_UNIVERSE
         universe = [t.upper() for t in universe]
