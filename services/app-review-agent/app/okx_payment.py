@@ -61,6 +61,7 @@ def _build_middleware(routes: dict[str, Any]):
         OKXFacilitatorClient,
         OKXFacilitatorConfig,
     )
+    from x402.mechanisms.evm.exact import ExactEvmServerScheme
 
     ak, sk, pp = _creds()
     facilitator = OKXFacilitatorClient(
@@ -70,7 +71,13 @@ def _build_middleware(routes: dict[str, Any]):
             sync_settle=os.getenv("PAY_SYNC_SETTLE", "1") == "1",
         )
     )
-    return payment_middleware_from_config(routes, facilitator_client=facilitator)
+    # Register the server-side scheme handler for exact@<network> (EVM / X Layer).
+    # Without this the middleware raises "No scheme for exact on eip155:196".
+    network = os.getenv("PAY_NETWORK", "eip155:196")
+    schemes = [{"network": network, "server": ExactEvmServerScheme()}]
+    return payment_middleware_from_config(
+        routes, facilitator_client=facilitator, schemes=schemes
+    )
 
 
 def install(app, routes: dict[str, Any]) -> bool:
