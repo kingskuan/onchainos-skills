@@ -3,9 +3,6 @@ node_modules/
 
 # Environment variables
 .env
-OKX_API_KEY=d9bdf17c-2fcd-459e-853f-da080137baa4
-OKX_SECRET_KEY=FD765C0DF01465B43FE554D00DF99225
-OKX_PASSPHRASE=Namkun95@okx
 .env.local
 .env.*.local
 
