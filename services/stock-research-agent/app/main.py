@@ -13,6 +13,8 @@ buyer flow. Off by default so the service is usable while pricing is decided.
 """
 from __future__ import annotations
 
+import os
+
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -20,16 +22,21 @@ import httpx
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 
-from . import edgar, payments
+from . import edgar, okx_payment
 from .analyst import analyze_stock
 from .research import research
 from .screener import DEFAULT_UNIVERSE, screen
 
 SERVICE_NAME = "Stock Research Agent"
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 
-# Paths that require payment when the x402 gate is enabled.
-PAID_PATHS = ("/research", "/screener", "/analyze", "/mcp")
+# x402 pricing per protected route (X Layer, USDT). AI analyst is the premium.
+PAY_ROUTES = {
+    "GET /research/*": okx_payment.route("0.05"),
+    "GET /screener": okx_payment.route("0.1"),
+    "GET /analyze/*": okx_payment.route("0.5"),
+    "POST /mcp": okx_payment.route("0.5"),
+}
 
 
 @asynccontextmanager
@@ -46,32 +53,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=SERVICE_NAME, version=VERSION, lifespan=lifespan)
 
-
-@app.middleware("http")
-async def x402_gate(request: Request, call_next):
-    path = request.url.path
-    if not payments.enabled() or not path.startswith(PAID_PATHS):
-        return await call_next(request)
-
-    resource = str(request.url)
-    description = f"{SERVICE_NAME} — per-call fee"
-    x_payment = request.headers.get("x-payment")
-
-    if not x_payment:
-        return JSONResponse(status_code=402, content=payments.requirements(resource, description))
-
-    ok, reason, settlement = await payments.verify_and_settle(
-        request.app.state.client, x_payment, resource, description
-    )
-    if not ok:
-        body = payments.requirements(resource, description)
-        body["error"] = reason
-        return JSONResponse(status_code=402, content=body)
-
-    response = await call_next(request)
-    if settlement:
-        response.headers["X-PAYMENT-RESPONSE"] = payments.encode_response(settlement)
-    return response
+# Real OKX x402 gate — off until facilitator creds + PAY_TO are set.
+PAYMENTS_ON = okx_payment.install(app, PAY_ROUTES)
 
 
 def _tool_manifest() -> list[dict[str, Any]]:
@@ -139,11 +122,10 @@ async def root():
         },
         "mcp_tools": _tool_manifest(),
         "payments": {
-            "enabled": payments.enabled(),
-            "price": payments.config()["price"],
-            "asset": payments.config()["asset"],
-            "network": payments.config()["network"],
-            "scheme": "x402 (exact)",
+            "enabled": PAYMENTS_ON,
+            "scheme": "x402 (exact) via OKX facilitator",
+            "network": os.getenv("PAY_NETWORK", "eip155:196"),
+            "prices": {"research": "$0.05", "screener": "$0.1", "analyze": "$0.5"},
         },
     }
 

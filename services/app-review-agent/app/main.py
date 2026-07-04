@@ -25,12 +25,21 @@ import httpx
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 
+import os
+
 from . import analyze as analyzer
-from . import apple, googleplay, payments
+from . import apple, googleplay, okx_payment
 
 SERVICE_NAME = "App Review Analysis Agent"
-VERSION = "0.1.0"
-PAID_PATHS = ("/analyze", "/reviews", "/compare", "/mcp")
+VERSION = "0.2.0"
+
+# x402 pricing per protected route (X Layer, USDT).
+PAY_ROUTES = {
+    "GET /analyze": okx_payment.route("0.03"),
+    "GET /reviews": okx_payment.route("0.03"),
+    "GET /compare": okx_payment.route("0.05"),
+    "POST /mcp": okx_payment.route("0.03"),
+}
 
 
 def _platform(p: str):
@@ -51,27 +60,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=SERVICE_NAME, version=VERSION, lifespan=lifespan)
 
-
-@app.middleware("http")
-async def x402_gate(request: Request, call_next):
-    path = request.url.path
-    if not payments.enabled() or not path.startswith(PAID_PATHS):
-        return await call_next(request)
-    resource, description = str(request.url), f"{SERVICE_NAME} — per-call fee"
-    x_payment = request.headers.get("x-payment")
-    if not x_payment:
-        return JSONResponse(status_code=402, content=payments.requirements(resource, description))
-    ok, reason, settlement = await payments.verify_and_settle(
-        request.app.state.client, x_payment, resource, description
-    )
-    if not ok:
-        body = payments.requirements(resource, description)
-        body["error"] = reason
-        return JSONResponse(status_code=402, content=body)
-    response = await call_next(request)
-    if settlement:
-        response.headers["X-PAYMENT-RESPONSE"] = payments.encode_response(settlement)
-    return response
+# Real OKX x402 gate — off until facilitator creds + PAY_TO are set.
+PAYMENTS_ON = okx_payment.install(app, PAY_ROUTES)
 
 
 def _tool_manifest() -> list[dict[str, Any]]:
@@ -142,11 +132,10 @@ async def root():
         },
         "mcp_tools": _tool_manifest(),
         "payments": {
-            "enabled": payments.enabled(),
-            "price": payments.config()["price"],
-            "asset": payments.config()["asset"],
-            "network": payments.config()["network"],
-            "scheme": "x402 (exact)",
+            "enabled": PAYMENTS_ON,
+            "scheme": "x402 (exact) via OKX facilitator",
+            "network": os.getenv("PAY_NETWORK", "eip155:196"),
+            "prices": {"analyze": "$0.03", "reviews": "$0.03", "compare": "$0.05"},
         },
     }
 

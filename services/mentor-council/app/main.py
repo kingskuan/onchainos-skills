@@ -16,6 +16,7 @@ Optional x402 payment gate (env PAY_ENABLED=1).
 """
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -23,13 +24,21 @@ import httpx
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from . import payments
+from . import okx_payment
 from .engine import council, mentor
 from .personas import PERSONAS, catalog
 
 SERVICE_NAME = "Mentor Council"
-VERSION = "0.1.0"
-PAID_PATHS = ("/mentor", "/council", "/mcp", "/m/")
+VERSION = "0.2.0"
+
+# x402 pricing per protected route (X Layer, USDT). The flagship council is the
+# premium product; single-mentor calls are cheap.
+PAY_ROUTES = {
+    "POST /council": okx_payment.route("1.5"),
+    "POST /mcp": okx_payment.route("1.5"),
+    "POST /mentor/*": okx_payment.route("0.3"),
+    "POST /m/*/mcp": okx_payment.route("0.3"),
+}
 
 
 @asynccontextmanager
@@ -41,27 +50,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=SERVICE_NAME, version=VERSION, lifespan=lifespan)
 
-
-@app.middleware("http")
-async def x402_gate(request: Request, call_next):
-    path = request.url.path
-    if not payments.enabled() or not path.startswith(PAID_PATHS):
-        return await call_next(request)
-    resource, description = str(request.url), f"{SERVICE_NAME} — per-call fee"
-    x_payment = request.headers.get("x-payment")
-    if not x_payment:
-        return JSONResponse(status_code=402, content=payments.requirements(resource, description))
-    ok, reason, settlement = await payments.verify_and_settle(
-        request.app.state.client, x_payment, resource, description
-    )
-    if not ok:
-        body = payments.requirements(resource, description)
-        body["error"] = reason
-        return JSONResponse(status_code=402, content=body)
-    response = await call_next(request)
-    if settlement:
-        response.headers["X-PAYMENT-RESPONSE"] = payments.encode_response(settlement)
-    return response
+# Real OKX x402 gate (official okxweb3-app-x402). Off until facilitator creds +
+# PAY_TO are set — see app/okx_payment.py.
+PAYMENTS_ON = okx_payment.install(app, PAY_ROUTES)
 
 
 def _tool_manifest() -> list[dict[str, Any]]:
@@ -110,10 +101,10 @@ async def root():
         "mentors": catalog(),
         "mcp_tools": _tool_manifest(),
         "payments": {
-            "enabled": payments.enabled(),
-            "price": payments.config()["price"],
-            "asset": payments.config()["asset"],
-            "network": payments.config()["network"],
+            "enabled": PAYMENTS_ON,
+            "scheme": "x402 (exact) via OKX facilitator",
+            "network": os.getenv("PAY_NETWORK", "eip155:196"),
+            "prices": {"council": "$1.5", "mentor": "$0.3"},
         },
     }
 
