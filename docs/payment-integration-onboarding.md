@@ -47,7 +47,9 @@ the middleware and declares a price per route.
 ## 2. Install the SDK (Python / FastAPI)
 
 ```bash
-pip install okxweb3-app-x402 fastapi uvicorn
+# NOTE the [evm] extra — required for X Layer (eip155) settlement. Without it
+# you get: RouteConfigurationError: No scheme for "exact" on "eip155:196".
+pip install "okxweb3-app-x402[evm]" fastapi uvicorn
 ```
 
 Other stacks (same semantics): Node `@okxweb3/x402-express` · Go
@@ -84,6 +86,7 @@ from fastapi import FastAPI
 from x402.http.middleware.fastapi import payment_middleware_from_config
 from x402.http.okx_auth import OKXAuthConfig
 from x402.http.okx_facilitator_client import OKXFacilitatorClient, OKXFacilitatorConfig
+from x402.mechanisms.evm.exact import ExactEvmServerScheme
 
 app = FastAPI()
 
@@ -105,7 +108,11 @@ routes = {
                                       "price": "$0.3", "network": "eip155:196"}]},
 }
 
-mw = payment_middleware_from_config(routes, facilitator_client=facilitator)
+# REQUIRED: register the server-side scheme handler for exact@<network>.
+# Omitting `schemes` → RouteConfigurationError "No scheme for exact on eip155:196".
+schemes = [{"network": "eip155:196", "server": ExactEvmServerScheme()}]
+
+mw = payment_middleware_from_config(routes, facilitator_client=facilitator, schemes=schemes)
 
 @app.middleware("http")
 async def x402(request, call_next):
@@ -163,6 +170,12 @@ Decide what happens when creds are **absent**:
 - **Wrong price format** — `price` must be a dollar string like `"$0.3"`, not a
   bare number or a token amount.
 - **Wrong network** — X Layer is `eip155:196` (CAIP-2), not `196` or `xlayer`.
+- **`No scheme for "exact" on "eip155:196"` (500)** — you installed the base SDK
+  but not the EVM extra, or didn't pass `schemes=[…ExactEvmServerScheme()…]` to
+  `payment_middleware_from_config`. Fix: `pip install "okxweb3-app-x402[evm]"`
+  **and** register the scheme (§4). Validate creds up front with
+  `OKXFacilitatorClient(...).get_supported()` — it lists the supported
+  scheme/network kinds.
 - **Secrets in the repo** — keep `OKX_*` and `PAY_TO` in host env vars only.
 - **`$PORT` on PaaS** — bind uvicorn to `$PORT` via a shell (`sh -c 'uvicorn … --port ${PORT}'`),
   or the container 502s. (Unrelated to payments but bites every first deploy.)
