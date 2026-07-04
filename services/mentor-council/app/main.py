@@ -29,7 +29,7 @@ from .personas import PERSONAS, catalog
 
 SERVICE_NAME = "Mentor Council"
 VERSION = "0.1.0"
-PAID_PATHS = ("/mentor", "/council", "/mcp")
+PAID_PATHS = ("/mentor", "/council", "/mcp", "/m/")
 
 
 @asynccontextmanager
@@ -144,6 +144,16 @@ async def council_endpoint(request: Request, body: dict[str, Any]):
     k = int((body or {}).get("k", 3))
     mentors_arg = (body or {}).get("mentors")
     return await council(request.app.state.client, q, k=k, mentors=mentors_arg)
+
+
+@app.post("/m/{key}/mcp")
+async def per_mentor_mcp(request: Request, key: str, body: dict[str, Any]):
+    """Per-mentor MCP endpoint — one distinct A2MCP endpoint per methodology ASP."""
+    args = body.get("arguments") or body.get("params") or {}
+    q = (args.get("question") or body.get("question") or "").strip()
+    if not q:
+        return JSONResponse(status_code=400, content={"error": "question required"})
+    return await mentor(request.app.state.client, key, q)
 
 
 @app.post("/mcp")
