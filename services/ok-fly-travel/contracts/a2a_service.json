@@ -1,0 +1,28 @@
+{
+  "service_name": "travel-planner-asp",
+  "display_name": "Crypto-Friendly Travel Planner",
+  "version": "0.1.0",
+  "description": "An agentic travel planning service for OKX.AI that turns trip inputs into structured itineraries, budget breakdowns, POI-backed recommendations, and crypto-friendly destination notes.",
+  "mode": "a2a",
+  "skills": [
+    "trip intake",
+    "multi-step travel research",
+    "itinerary optimization",
+    "budget projection",
+    "crypto-friendly annotation",
+    "structured report generation"
+  ],
+  "entrypoints": {
+    "health": { "method": "GET", "path": "/health" },
+    "manifest": { "method": "GET", "path": "/a2a/manifest" },
+    "invoke": { "method": "POST", "path": "/a2a/invoke" },
+    "debug_plan": { "method": "POST", "path": "/plan" }
+  },
+  "input_fields": ["origin","destination","start_date","end_date","travelers","budget_usd","preferences","pace","trip_type"],
+  "output_fields": ["request","research","json","markdown","best_plan"],
+  "notes": [
+    "Flights and hotels are deterministic mock data for reliability in demos.",
+    "POIs and weather use free public sources with fallback demo data.",
+    "Crypto-friendly labels are heuristics and should be presented as advisory."
+  ]
+}
