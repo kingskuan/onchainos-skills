@@ -35,7 +35,10 @@ PAY_ROUTES = {
     "GET /research/*": okx_payment.route("0.05"),
     "GET /screener": okx_payment.route("0.1"),
     "GET /analyze/*": okx_payment.route("0.5"),
-    "POST /mcp": okx_payment.route("0.5"),
+    # Registered ASP endpoint (on-chain fee = $2). The 402 challenge price MUST
+    # match the fee buyers see in the marketplace, per the OKX Agent payment
+    # protocol standard — otherwise listing review rejects the service.
+    "POST /mcp": okx_payment.route("2"),
 }
 
 
