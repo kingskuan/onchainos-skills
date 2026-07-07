@@ -55,9 +55,14 @@ class Optimizer:
         flights: List[FlightOption],
         hotels: List[HotelOption],
         pois: List[POIOption],
+        display_name: Optional[str] = None,
+        city_code: Optional[str] = None,
+        resolved: bool = True,
     ) -> List[Plan]:
         days = self.planner.trip_days(req)
         crypto = crypto_friendly_context(req.destination)
+        dest_label = display_name or req.destination
+        code = city_code or self.planner.infer_city_code(req.destination)
         ranked_flights = sorted(flights, key=lambda f: self.score_flight(f, req), reverse=True)[:3] or [None]
         ranked_hotels = sorted(hotels, key=lambda h: self.score_hotel(h, req), reverse=True)[:3] or [None]
         poi_days = self._assign_pois(pois, days, req.pace)
@@ -77,11 +82,22 @@ class Optimizer:
                 if req.budget_usd > 0 and total > req.budget_usd:
                     score -= min(1.0, (total - req.budget_usd) / req.budget_usd)
 
+                assumptions = [
+                    f"Destination '{req.destination}' resolved to {dest_label} (code {code}).",
+                    "Flight & hotel prices are simulated estimates (no live booking API) — "
+                    "not bookable fares. POIs & weather are from live public sources.",
+                    "Crypto-friendly labels are heuristic and advisory only.",
+                ]
+                if not resolved:
+                    assumptions.insert(1, "WARNING: destination could not be geolocated; "
+                                          "estimates use a generic pricing band and POIs/weather are omitted.")
+
                 plans.append(Plan(
-                    title=f"{req.destination} {req.start_date}→{req.end_date} {req.trip_type.title()} Plan",
+                    title=f"{dest_label} {req.start_date}→{req.end_date} {req.trip_type.title()} Plan",
                     summary=(
-                        f"{req.trip_type} trip for {req.travelers} traveler(s), pace={req.pace}. "
-                        f"Est. total ${round(total,2)}. Tags: {', '.join(crypto['city_tags'])}."
+                        f"{req.trip_type} trip to {dest_label} for {req.travelers} traveler(s), "
+                        f"pace={req.pace}. Est. total ${round(total,2)} (simulated). "
+                        f"Tags: {', '.join(crypto['city_tags'])}."
                     ),
                     flight=flight,
                     hotel=hotel,
@@ -94,11 +110,7 @@ class Optimizer:
                     },
                     crypto_friendly_notes=crypto["notes"],
                     score=score,
-                    assumptions=[
-                        f"Destination mapped to city code {self.planner.infer_city_code(req.destination)}",
-                        "Flight and hotel data are deterministic mock (demo mode).",
-                        "Crypto-friendly labels are heuristic and advisory only.",
-                    ],
+                    assumptions=assumptions,
                 ))
 
         return sorted(plans, key=lambda p: p.score, reverse=True)[:3]

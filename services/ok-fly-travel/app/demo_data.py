@@ -116,8 +116,11 @@ def city_demo_by_name(destination: str) -> Dict[str, Any]:
     for city, data in CITY_DEMO_DATA.items():
         if city.lower() in key or key in city.lower():
             return data
+    # Unknown city: do NOT imply a specific real city (was "TYO"). These generic
+    # placeholder POIs are only ever used if live Overpass returns nothing, and are
+    # tagged as placeholders so they can't be mistaken for real, named attractions.
     return {
-        "city_code": "TYO",
+        "city_code": "UNK",
         "display_name": destination,
         "crypto_friendly": {
             "tags": ["cashless_recommended", "card_payment_check"],
@@ -125,9 +128,9 @@ def city_demo_by_name(destination: str) -> Dict[str, Any]:
             "notes": ["Use heuristic crypto-friendly labels as advisory only."],
         },
         "fallback_pois": [
-            {"name": "City Center Walk", "kind": "attraction", "rating": 4.0, "distance_km": 1.2},
-            {"name": "Local Museum", "kind": "museum", "rating": 4.1, "distance_km": 2.0},
-            {"name": "Best Viewpoint", "kind": "viewpoint", "rating": 4.2, "distance_km": 3.1},
-            {"name": "Central Park", "kind": "park", "rating": 4.0, "distance_km": 1.5},
+            {"name": f"{destination} city centre (placeholder)", "kind": "attraction", "rating": 4.0, "distance_km": 1.2},
+            {"name": f"{destination} local museum (placeholder)", "kind": "museum", "rating": 4.1, "distance_km": 2.0},
+            {"name": f"{destination} viewpoint (placeholder)", "kind": "viewpoint", "rating": 4.2, "distance_km": 3.1},
+            {"name": f"{destination} central park (placeholder)", "kind": "park", "rating": 4.0, "distance_km": 1.5},
         ],
     }

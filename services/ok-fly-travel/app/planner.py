@@ -1,8 +1,23 @@
 from __future__ import annotations
 
 import datetime as dt
+import re
 
 from .models import TripRequest
+
+
+# Known city → IATA metro code. This is intentionally a *convenience* map, not the
+# source of truth: any city not listed is resolved by geocoding (see service.py),
+# NOT silently coerced to a default city.
+CITY_CODE_MAP = {
+    "tokyo": "TYO", "singapore": "SIN", "hong kong": "HKG", "bangkok": "BKK",
+    "seoul": "SEL", "dubai": "DXB", "paris": "PAR", "london": "LON",
+    "new york": "NYC", "taipei": "TPE", "new taipei": "TPE", "tainan": "TNN",
+    "台南": "TNN", "台北": "TPE", "高雄": "KHH", "kaohsiung": "KHH",
+    "taichung": "RMQ", "台中": "RMQ", "osaka": "OSA", "大阪": "OSA",
+    "kyoto": "UKY", "京都": "UKY", "東京": "TYO", "东京": "TYO",
+    "首爾": "SEL", "首尔": "SEL", "曼谷": "BKK", "新加坡": "SIN", "香港": "HKG",
+}
 
 
 class Planner:
@@ -20,16 +35,21 @@ class Planner:
         )
 
     def infer_city_code(self, destination: str) -> str:
-        key = destination.lower()
-        mapping = {
-            "tokyo": "TYO", "singapore": "SIN", "hong kong": "HKG",
-            "bangkok": "BKK", "seoul": "SEL", "dubai": "DXB",
-            "paris": "PAR", "london": "LON", "new york": "NYC",
-        }
-        for k, v in mapping.items():
+        """Best-effort metro code. NEVER silently returns a real city for an
+        unknown destination (the old behaviour was to return "TYO", which made a
+        Tainan request come back as Tokyo). For an unknown city we return a
+        deterministic placeholder code derived from the name so it is clearly
+        distinct — the real display name comes from geocoding, not this code."""
+        key = destination.strip().lower()
+        for k, v in CITY_CODE_MAP.items():
             if k in key or key in k:
                 return v
-        return "TYO"
+        alpha = re.sub(r"[^a-z]", "", key)
+        return alpha[:3].upper() if len(alpha) >= 3 else "UNK"
+
+    def is_known_city(self, destination: str) -> bool:
+        key = destination.strip().lower()
+        return any(k in key or key in k for k in CITY_CODE_MAP)
 
     def trip_days(self, req: TripRequest) -> int:
         s = dt.date.fromisoformat(req.start_date)

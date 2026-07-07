@@ -91,3 +91,43 @@ def test_weather_and_demo_layer():
     data = resp.json()
     assert data["research"]["weather"]["location"] == "Tokyo, Japan"
     assert "crypto_friendly" in data["research"]["city_demo"]
+
+
+def test_camelcase_field_names_accepted():
+    """Regression: a buyer sending camelCase (startDate/endDate/budget) must NOT
+    422 — that mismatch previously happened AFTER x402 settled, double-charging."""
+    _patch_demo_sources()
+    resp = client.post("/plan", json={
+        "origin": "HKG", "destination": "Tokyo",
+        "startDate": "2026-08-12", "endDate": "2026-08-16",
+        "adults": 2, "budget": 2500, "tripType": "leisure",
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["request"]["start_date"] == "2026-08-12"
+    assert data["request"]["end_date"] == "2026-08-16"
+    assert data["request"]["travelers"] == 2
+
+
+def test_unknown_destination_is_not_silently_tokyo():
+    """Regression: an unlisted destination must resolve to ITSELF, never fall back
+    to Tokyo for flights/hotels (the reported Tainan→Tokyo bug)."""
+    # Restore the real (deterministic, offline) flight/hotel provider — earlier
+    # tests monkeypatch it to a hardcoded Tokyo hotel on the shared service.
+    from app.clients import AmadeusClient
+    main_module.service.amadeus = AmadeusClient()
+    # Use the built-in offline fallback for Tainan; skip live POI/weather calls.
+    main_module.service.otm.search_pois = lambda *a, **k: []
+    main_module.service.otm.get_weather = lambda *a, **k: None
+    resp = client.post("/plan", json={
+        "origin": "HKG", "destination": "台南",
+        "start_date": "2026-07-24", "end_date": "2026-07-27",
+        "travelers": 4, "budget_usd": 2000, "pace": "relaxed",
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["research"]["city_code"] == "TNN"
+    assert "Tainan" in data["research"]["resolved_destination"]
+    hotel_name = (data["best_plan"]["hotel"] or {}).get("name", "")
+    assert "tokyo" not in hotel_name.lower()
+    assert data["data_mode"].startswith("simulated")

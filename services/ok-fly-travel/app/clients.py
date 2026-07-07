@@ -74,12 +74,50 @@ CITY_PROFILE_BY_CODE: Dict[str, Dict[str, Any]] = {
 FLIGHT_DEPARTURE_TIMES = ["08:10", "13:40", "22:15"]
 HOTEL_ZONES = ["Central", "Transit Core", "Lifestyle District", "Quiet Residential", "Riverfront"]
 
+# Coarse pricing bands by region, used when a destination is NOT in the known-city
+# table. This lets us estimate for any geocoded city without falling back to a
+# specific wrong city's profile (the old bug: unknown city inherited Tokyo).
+REGION_BASE = {
+    "apac":   {"flight_base": 200, "hotel_base": 150, "flight_hours": (2, 7)},
+    "mea":    {"flight_base": 420, "hotel_base": 240, "flight_hours": (6, 12)},
+    "europe": {"flight_base": 520, "hotel_base": 260, "flight_hours": (10, 15)},
+    "na":     {"flight_base": 640, "hotel_base": 300, "flight_hours": (12, 18)},
+    "global": {"flight_base": 300, "hotel_base": 160, "flight_hours": (3, 10)},
+}
 
-def _profile_for_city_code(city_code: str) -> Dict[str, Any]:
-    return CITY_PROFILE_BY_CODE.get(city_code.upper(), {
-        "name": city_code.upper(), "region": "global",
-        "flight_base": 260, "hotel_base": 140, "flight_hours": (3, 9),
-    })
+
+def region_from_latlon(lat: Optional[float], lon: Optional[float]) -> str:
+    """Coarse continent bucket from coordinates — only used for pricing bands."""
+    if lat is None or lon is None:
+        return "global"
+    if -50 <= lat <= 60 and 60 <= lon <= 180:
+        return "apac"
+    if 10 <= lat <= 45 and 25 <= lon <= 63:
+        return "mea"
+    if 34 <= lat <= 72 and -25 <= lon <= 45:
+        return "europe"
+    if 5 <= lat <= 72 and -168 <= lon <= -52:
+        return "na"
+    return "global"
+
+
+def build_city_profile(city_code: str, display_name: Optional[str] = None,
+                       region: Optional[str] = None) -> Dict[str, Any]:
+    """Profile for flights/hotels. Known codes use their curated profile; unknown
+    destinations use a region-based band and ALWAYS carry the real display name so
+    a Tainan trip is never labelled 'Tokyo'."""
+    known = CITY_PROFILE_BY_CODE.get(city_code.upper())
+    if known:
+        prof = dict(known)
+        if display_name:
+            prof["name"] = display_name
+        return prof
+    band = REGION_BASE.get(region or "global", REGION_BASE["global"])
+    return {
+        "name": display_name or city_code.upper(),
+        "region": region or "global",
+        **band,
+    }
 
 
 class AmadeusClient:
@@ -93,8 +131,10 @@ class AmadeusClient:
         adults: int = 1,
         currency: str = "USD",
         max_results: int = 5,
+        display_name: Optional[str] = None,
+        region: Optional[str] = None,
     ) -> List[FlightOption]:
-        dest_profile = _profile_for_city_code(destination)
+        dest_profile = build_city_profile(destination, display_name, region)
         rng = random.Random(_seed(origin, destination, start_date, str(adults)))
         low_h, high_h = dest_profile["flight_hours"]
         options: List[FlightOption] = []
@@ -129,8 +169,10 @@ class AmadeusClient:
         check_out: str,
         adults: int = 1,
         max_results: int = 10,
+        display_name: Optional[str] = None,
+        region: Optional[str] = None,
     ) -> List[HotelOption]:
-        profile = _profile_for_city_code(city_code)
+        profile = build_city_profile(city_code, display_name, region)
         rng = random.Random(_seed(city_code, check_in, check_out, str(adults)))
         nights = max(1, (dt.date.fromisoformat(check_out) - dt.date.fromisoformat(check_in)).days)
         base = profile["hotel_base"]
@@ -187,7 +229,10 @@ class OpenTripMapClient:
         except Exception:
             pass
 
-        # Hardcoded fallback
+        # Offline fallback for when Nominatim is unreachable. If the city is not
+        # here either, return None — the caller must NOT be handed another city's
+        # coordinates. (The old code returned Tokyo's coords for anything unknown,
+        # which is why a Tainan request produced a Tokyo itinerary.)
         fallback = {
             "tokyo":     {"lat": 35.6762, "lon": 139.6503, "display_name": "Tokyo, Japan"},
             "singapore": {"lat":  1.3521, "lon": 103.8198, "display_name": "Singapore"},
@@ -198,12 +243,20 @@ class OpenTripMapClient:
             "paris":     {"lat": 48.8566, "lon":   2.3522, "display_name": "Paris, France"},
             "london":    {"lat": 51.5074, "lon":  -0.1278, "display_name": "London, UK"},
             "new york":  {"lat": 40.7128, "lon": -74.0060, "display_name": "New York, USA"},
+            "taipei":    {"lat": 25.0330, "lon": 121.5654, "display_name": "Taipei, Taiwan"},
+            "台北":       {"lat": 25.0330, "lon": 121.5654, "display_name": "Taipei, Taiwan"},
+            "tainan":    {"lat": 22.9997, "lon": 120.2270, "display_name": "Tainan, Taiwan"},
+            "台南":       {"lat": 22.9997, "lon": 120.2270, "display_name": "Tainan, Taiwan"},
+            "kaohsiung": {"lat": 22.6273, "lon": 120.3014, "display_name": "Kaohsiung, Taiwan"},
+            "高雄":       {"lat": 22.6273, "lon": 120.3014, "display_name": "Kaohsiung, Taiwan"},
+            "osaka":     {"lat": 34.6937, "lon": 135.5023, "display_name": "Osaka, Japan"},
+            "大阪":       {"lat": 34.6937, "lon": 135.5023, "display_name": "Osaka, Japan"},
         }
         key = city_name.strip().lower()
         for k, v in fallback.items():
             if k in key or key in k:
                 return v
-        return {"lat": 35.6762, "lon": 139.6503, "display_name": city_name}
+        return None
 
     def search_pois(self, city_name: str, kinds: str = "tourism|amenity|historic|leisure", limit: int = 10) -> List[POIOption]:
         geo = self.geocode(city_name)

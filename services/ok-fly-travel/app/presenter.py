@@ -10,8 +10,17 @@ class Presenter:
     def render_json(self, plans: List[Plan]) -> dict:
         return {"plans": [p.model_dump() for p in plans]}
 
-    def render_markdown(self, plans: List[Plan]) -> str:
+    def render_markdown(self, plans: List[Plan], resolved: bool = True,
+                        resolved_name: str = "") -> str:
         lines: List[str] = []
+        if resolved_name:
+            lines.append(f"# Trip plan for {resolved_name}")
+        if not resolved:
+            lines.append("> ⚠️ Destination could not be geolocated — POIs/weather are "
+                         "omitted and prices use a generic band. Please refine the destination.")
+        lines.append("> ℹ️ Flights & hotels are **simulated planning estimates** (not "
+                     "bookable fares). POIs & weather come from live public sources.")
+        lines.append("")
         for i, plan in enumerate(plans, 1):
             lines.append(f"## Option {i}: {plan.title}")
             lines.append(f"- **Score**: {plan.score:.2f}")
