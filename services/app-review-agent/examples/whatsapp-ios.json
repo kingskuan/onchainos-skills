@@ -1,0 +1,239 @@
+{
+    "app": {
+        "app_id": "310633997",
+        "name": "WhatsApp Messenger",
+        "developer": "WhatsApp Inc.",
+        "avg_rating": 4.68653,
+        "rating_count": 18183596,
+        "genre": "Social Networking",
+        "version": "26.25.77",
+        "release_notes": "We update the app regularly to fix bugs, optimize performance and improve the experience. Thanks for using WhatsApp!",
+        "url": "https://apps.apple.com/us/app/whatsapp-messenger/id310633997?uo=4"
+    },
+    "sample_size": 150,
+    "sample_avg_rating": 2.97,
+    "overall_rating": 4.68653,
+    "overall_rating_count": 18183596,
+    "rating_distribution": {
+        "1": 60,
+        "2": 10,
+        "3": 11,
+        "4": 13,
+        "5": 56
+    },
+    "sentiment": {
+        "positive": {
+            "count": 69,
+            "pct": 46.0
+        },
+        "neutral": {
+            "count": 11,
+            "pct": 7.3
+        },
+        "negative": {
+            "count": 70,
+            "pct": 46.7
+        }
+    },
+    "loved_themes": [
+        {
+            "term": "facebook profile",
+            "count": 3
+        },
+        {
+            "term": "face authentication",
+            "count": 2
+        },
+        {
+            "term": "whatsapp plus",
+            "count": 2
+        },
+        {
+            "term": "plus add",
+            "count": 2
+        },
+        {
+            "term": "add features",
+            "count": 2
+        },
+        {
+            "term": "resolve bug",
+            "count": 2
+        },
+        {
+            "term": "stay connected",
+            "count": 2
+        },
+        {
+            "term": "blurry status",
+            "count": 2
+        },
+        {
+            "term": "status updates",
+            "count": 2
+        },
+        {
+            "term": "user name",
+            "count": 2
+        },
+        {
+            "term": "clicking cancel",
+            "count": 2
+        },
+        {
+            "term": "verification process",
+            "count": 2
+        }
+    ],
+    "complaint_themes": [
+        {
+            "term": "video call",
+            "count": 7
+        },
+        {
+            "term": "video llamada",
+            "count": 4
+        },
+        {
+            "term": "fix bug",
+            "count": 3
+        },
+        {
+            "term": "kicking out",
+            "count": 3
+        },
+        {
+            "term": "couldn recover",
+            "count": 3
+        },
+        {
+            "term": "fix issue",
+            "count": 3
+        },
+        {
+            "term": "pro max",
+            "count": 2
+        },
+        {
+            "term": "nobody asked",
+            "count": 2
+        },
+        {
+            "term": "recover picture",
+            "count": 2
+        },
+        {
+            "term": "picture message",
+            "count": 2
+        },
+        {
+            "term": "video calls",
+            "count": 2
+        },
+        {
+            "term": "horrible forced",
+            "count": 2
+        }
+    ],
+    "top_issues": [
+        {
+            "rating": 1,
+            "keyword": "bug",
+            "review": "Fix the bug\u2019s Fix ur bug\u2019s it\u2019s getting out of hands to be honest ! I rather use a different App if it\u2019s keep going like this ! It\u2019s kicking me out of the App literally once in every day i swear to god fix it"
+        },
+        {
+            "rating": 1,
+            "keyword": "buggy",
+            "review": "Really Buggy on iphone 17 pro max Animation is stuttering, sluggish, when I click on recent emoji\u2019s or stickers, it fully freezes for 6 sec."
+        },
+        {
+            "rating": 1,
+            "keyword": "bug",
+            "review": "Videos are getting stuck on the latest update Please fix this bug. Video calls are getting freezed"
+        },
+        {
+            "rating": 1,
+            "keyword": "lag",
+            "review": "Lag Se queda mucho tiempo colgado, sin acci\u00f3n"
+        },
+        {
+            "rating": 1,
+            "keyword": "glitch",
+            "review": "Video Call Glitch With New Update Since the last update ALL of my video calls freeze, are delayed, and the screen turns green and purple making it impossible to stay engaged in a conversation for any amount of time. T..."
+        },
+        {
+            "rating": 1,
+            "keyword": "frozen",
+            "review": "horrible forced to update the app, but it instantly made it unusable. frozen every time i open it."
+        },
+        {
+            "rating": 1,
+            "keyword": "cannot",
+            "review": "Constant acct Review I use this app for my job, especially since majority of clients are international, I use WhatsApp. NEVER have I had my account \u201creviewed\u201d this many times where it blocks my access for at least 24 ..."
+        },
+        {
+            "rating": 1,
+            "keyword": "crashing",
+            "review": "Constantly crashing Messages are constantly delayed and notifications don't show up until I open the app. Very frustrating."
+        }
+    ],
+    "feature_requests": [
+        {
+            "rating": 2,
+            "keyword": "would love",
+            "review": "Please keep WhatsApp simple and focused on messaging I really like WhatsApp because it\u2019s simple, private, and easy to use for talking with friends and family. I\u2019m worried about the app slowly becoming more like a soci..."
+        },
+        {
+            "rating": 5,
+            "keyword": "should add",
+            "review": "Amazing WhatsApp Plus should add check mark verification? Plus, add more features rather than stickers. Please add more features to WhatsApp Plus."
+        },
+        {
+            "rating": 5,
+            "keyword": "please add",
+            "review": "I been to log in with email It would be better if the app allowed sign-up using both email and phone number, because I don't have a phone number but I want to download the app. \n\nCould you please add a feature to the ..."
+        }
+    ],
+    "rating_trend": {
+        "available": true,
+        "recent_avg": 3.12,
+        "older_avg": 2.81,
+        "delta": 0.31,
+        "direction": "improving"
+    },
+    "sample_positive": [
+        {
+            "rating": 5,
+            "title": "Awesome messenger",
+            "review": "I love it"
+        },
+        {
+            "rating": 5,
+            "title": "And I\u2019m using subscriptions",
+            "review": "Smh\ud83e\udd26\u200d\u2642\ufe0f keep freezing on my 17 Pro Max it\u2019s over a week now"
+        },
+        {
+            "rating": 5,
+            "title": "Review",
+            "review": "Excellent and fantastic app"
+        }
+    ],
+    "sample_negative": [
+        {
+            "rating": 1,
+            "title": "Fix the bug\u2019s",
+            "review": "Fix ur bug\u2019s it\u2019s getting out of hands to be honest ! I rather use a different App if it\u2019s keep going like this ! It\u2019s kicking me out of the App literally once in every day i swear to god fix it"
+        },
+        {
+            "rating": 1,
+            "title": "Really Buggy on iphone 17 pro max",
+            "review": "Animation is stuttering, sluggish, when I click on recent emoji\u2019s or stickers, it fully freezes for 6 sec."
+        },
+        {
+            "rating": 1,
+            "title": "Nobody asked for ai",
+            "review": "Get your ai garbage out of WhatsApp, nobody asked for this, nobody wanted this. Forcing me to have it on my screen is stupid, I will never use this thing and now it takes up valuable screen space and makes everything look awful. Please r..."
+        }
+    ],
+    "disclaimer": "Analysis of public app-store reviews for research/product insight. Read-only; no reviews are posted or altered."
+}

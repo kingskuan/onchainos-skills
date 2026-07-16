@@ -1,0 +1,22 @@
+{
+  "service_name": "okx-data-insights-asp",
+  "display_name": "数据洞察 · Data Insights",
+  "version": "1.0.0",
+  "role": "asp",
+  "service_type": "A2MCP",
+  "fee": "1",
+  "currency": "USDT",
+  "network": "eip155:196",
+  "assistants": [
+    {"key": "data_analyst", "name": "数据分析师", "does": "统计画像、相关性、异常检测、图表建议 (Vega-Lite)"},
+    {"key": "database_analyst", "name": "数据库分析师", "does": "表数据载入内存 SQLite,只读 SQL 或自然语言查询"},
+    {"key": "spreadsheet_operator", "name": "表格操作员", "does": "筛选/排序/选列/分组聚合/派生列 流水线"},
+    {"key": "quick_query", "name": "快查助手", "does": "计数/极值/求和/去重/查找,或实时 OKX 现货报价"}
+  ],
+  "endpoints": {
+    "health": "GET /health",
+    "manifest": "GET /a2a/manifest",
+    "invoke": "POST /a2a/invoke",
+    "mcp": "POST /mcp"
+  }
+}

@@ -1,0 +1,14 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# Foreground daemon; restart on crash so the 24/7 message layer self-heals.
+startCommand = "sh -c '/app/start.sh'"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+# IMPORTANT: Railway volumes are NOT defined in railway.toml — create one via the
+# dashboard (or the GraphQL mutation in README) and mount it at /data. All okx-a2a
+# state (XMTP identity, config.toml, login) lives under OKX_AGENT_TASK_HOME=
+# /data/.okx-agent-task, so it must be on that volume to survive redeploys.

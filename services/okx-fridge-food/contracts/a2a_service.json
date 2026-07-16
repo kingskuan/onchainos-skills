@@ -1,0 +1,11 @@
+{
+  "service_name": "fridge-recipe-asp",
+  "display_name": "Fridge-to-Recipe",
+  "version": "0.1.0",
+  "mode": "a2a",
+  "entrypoints": {
+    "health":   { "method": "GET",  "path": "/health" },
+    "manifest": { "method": "GET",  "path": "/a2a/manifest" },
+    "invoke":   { "method": "POST", "path": "/a2a/invoke" }
+  }
+}

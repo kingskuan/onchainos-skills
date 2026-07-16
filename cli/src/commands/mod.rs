@@ -1,3 +1,4 @@
+pub mod agent;
 pub mod agentic_wallet;
 pub mod cross_chain;
 pub mod competition;
