@@ -19,6 +19,9 @@ a2a = A2AAdapter(service)
 PAY_ROUTES = {
     "POST /query": okx_payment.route("0.3"),
     "POST /a2a/invoke": okx_payment.route("0.3"),
+    # Gate GET on the invoke path too, so x402 discovery probes (which use GET)
+    # get the 402 challenge instead of a bare 405 Method Not Allowed.
+    "GET /a2a/invoke": okx_payment.route("0.3"),
     "POST /mcp": okx_payment.route("0.3"),
 }
 PAYMENTS_ON = okx_payment.install(app, PAY_ROUTES)
@@ -53,6 +56,14 @@ def query(req: YtOSRequest) -> YtOSResponse:
         return service.run(req)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/a2a/invoke")
+def invoke_discovery() -> dict:
+    """Discovery probe target. When payments are on, unpaid GETs are answered
+    with the 402 challenge by the middleware before reaching here; once paid
+    (or when payments are off) it returns the manifest."""
+    return a2a.manifest()
 
 
 @app.post("/a2a/invoke")
