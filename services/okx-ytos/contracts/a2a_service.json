@@ -1,0 +1,41 @@
+{
+  "service_name": "ytos-defi-intel",
+  "display_name": "YtOS",
+  "version": "1.0.0",
+  "service_type": "A2MCP",
+  "pricing": {
+    "amount": "0.3",
+    "currency": "USDT",
+    "per": "call",
+    "network": "eip155:196",
+    "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+    "decimals": 6,
+    "amount_base_units": "300000"
+  },
+  "endpoint": "/a2a/invoke",
+  "capabilities": [
+    "wallet_portfolio",
+    "pendle_markets",
+    "pendle_wallet",
+    "defi_yields"
+  ],
+  "data_sources": [
+    "Blockscout v2 (wallet balances, USD valuation)",
+    "Pendle API v2 (YT/PT markets + wallet activity)",
+    "DeFiLlama Yields (cross-chain pools)"
+  ],
+  "input_schema": {
+    "type": "object",
+    "required": ["tool"],
+    "properties": {
+      "tool": {"type": "string", "enum": ["wallet", "pendle_markets", "pendle_wallet", "yields"]},
+      "address": {"type": "string"},
+      "chain": {"type": "string", "default": "eth"},
+      "project": {"type": "string"},
+      "symbol": {"type": "string"},
+      "min_tvl": {"type": "number", "default": 1000000},
+      "stable_only": {"type": "boolean", "default": false},
+      "limit": {"type": "integer", "default": 20}
+    }
+  }
+}
